@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
+import android.graphics.Typeface;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -19,9 +20,10 @@ import android.support.v7.graphics.Palette;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.widget.Toast;
-
+import android.os.BatteryManager;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -82,9 +84,12 @@ public class Sitecore extends CanvasWatchFaceService {
         private static final float MINUTE_STROKE_WIDTH = 3f;
         private static final float SECOND_TICK_STROKE_WIDTH = 2f;
 
+        private static final float HAND_END_CAP_RADIUS = 4f;
+
         private static final float CENTER_GAP_AND_CIRCLE_RADIUS = 4f;
 
-        private static final int SHADOW_RADIUS = 6;
+        private static final float SHADOW_RADIUS = 6f;
+
         /* Handler to update the time once a second in interactive mode. */
         private final Handler mUpdateTimeHandler = new EngineHandler(this);
         private Calendar mCalendar;
@@ -95,6 +100,8 @@ public class Sitecore extends CanvasWatchFaceService {
                 invalidate();
             }
         };
+
+        private Paint mTextColorPaint;
         private boolean mRegisteredTimeZoneReceiver = false;
         private boolean mMuteMode;
         private float mCenterX;
@@ -117,6 +124,9 @@ public class Sitecore extends CanvasWatchFaceService {
         private boolean mLowBitAmbient;
         private boolean mBurnInProtection;
 
+
+
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
@@ -135,6 +145,7 @@ public class Sitecore extends CanvasWatchFaceService {
         private void initializeBackground() {
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(Color.BLACK);
+
             mBackgroundBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.custom_background_white);
 
             /* Extracts colors from background image to improve watchface style. */
@@ -142,8 +153,8 @@ public class Sitecore extends CanvasWatchFaceService {
                 @Override
                 public void onGenerated(Palette palette) {
                     if (palette != null) {
-                        mWatchHandHighlightColor = palette.getVibrantColor(Color.RED);
-                        mWatchHandColor = palette.getLightVibrantColor(Color.WHITE);
+                        mWatchHandHighlightColor = palette.getVibrantColor(Color.BLACK);
+                        mWatchHandColor = palette.getLightVibrantColor(Color.BLACK);
                         mWatchHandShadowColor = palette.getDarkMutedColor(Color.BLACK);
                         updateWatchHandStyle();
                     }
@@ -153,8 +164,8 @@ public class Sitecore extends CanvasWatchFaceService {
 
         private void initializeWatchFace() {
             /* Set defaults for colors */
-            mWatchHandColor = Color.WHITE;
-            mWatchHandHighlightColor = Color.RED;
+            mWatchHandColor = Color.BLACK;
+            mWatchHandHighlightColor = Color.BLACK;
             mWatchHandShadowColor = Color.BLACK;
 
             mHourPaint = new Paint();
@@ -179,7 +190,7 @@ public class Sitecore extends CanvasWatchFaceService {
             mSecondPaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
 
             mTickAndCirclePaint = new Paint();
-            mTickAndCirclePaint.setColor(mWatchHandColor);
+            mTickAndCirclePaint.setColor(Color.WHITE);
             mTickAndCirclePaint.setStrokeWidth(SECOND_TICK_STROKE_WIDTH);
             mTickAndCirclePaint.setAntiAlias(true);
             mTickAndCirclePaint.setStyle(Paint.Style.STROKE);
@@ -208,6 +219,7 @@ public class Sitecore extends CanvasWatchFaceService {
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
             super.onAmbientModeChanged(inAmbientMode);
+
             mAmbient = inAmbientMode;
 
             updateWatchHandStyle();
@@ -218,9 +230,9 @@ public class Sitecore extends CanvasWatchFaceService {
 
         private void updateWatchHandStyle() {
             if (mAmbient) {
-                mHourPaint.setColor(Color.WHITE);
-                mMinutePaint.setColor(Color.WHITE);
-                mSecondPaint.setColor(Color.WHITE);
+                mHourPaint.setColor(Color.BLACK);
+                mMinutePaint.setColor(Color.BLACK);
+                mSecondPaint.setColor(Color.BLACK);
                 mTickAndCirclePaint.setColor(Color.WHITE);
 
                 mHourPaint.setAntiAlias(false);
@@ -234,10 +246,10 @@ public class Sitecore extends CanvasWatchFaceService {
                 mTickAndCirclePaint.clearShadowLayer();
 
             } else {
-                mHourPaint.setColor(mWatchHandColor);
-                mMinutePaint.setColor(mWatchHandColor);
-                mSecondPaint.setColor(mWatchHandHighlightColor);
-                mTickAndCirclePaint.setColor(mWatchHandColor);
+                mHourPaint.setColor(Color.BLACK);
+                mMinutePaint.setColor(Color.BLACK);
+                mSecondPaint.setColor(Color.BLACK);
+                mTickAndCirclePaint.setColor(Color.WHITE);
 
                 mHourPaint.setAntiAlias(true);
                 mMinutePaint.setAntiAlias(true);
@@ -281,8 +293,12 @@ public class Sitecore extends CanvasWatchFaceService {
             /*
              * Calculate lengths of different hands based on watch screen size.
              */
-            mSecondHandLength = (float) (mCenterX * 0.875);
-            sMinuteHandLength = (float) (mCenterX * 0.75);
+            //mSecondHandLength = (float) (mCenterX * 0.875);
+            //sMinuteHandLength = (float) (mCenterX * 0.75);
+            //sHourHandLength = (float) (mCenterX * 0.5);
+
+            mSecondHandLength = (float) (mCenterX * 0.9);
+            sMinuteHandLength = (float) (mCenterX * 0.7);
             sHourHandLength = (float) (mCenterX * 0.5);
 
 
@@ -352,18 +368,41 @@ public class Sitecore extends CanvasWatchFaceService {
 
             drawBackground(canvas);
             drawWatchFace(canvas);
+            getBatteryInfoPhone(canvas);
         }
 
         private void drawBackground(Canvas canvas) {
 
-            if (mAmbient && (mLowBitAmbient || mBurnInProtection)) {
-                canvas.drawColor(Color.BLUE);
-            } else if (mAmbient) {
-                canvas.drawBitmap(mGrayBackgroundBitmap, 0, 0, mBackgroundPaint);
-            } else {
-                canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
-            }
+            canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
+
+//            if ((mAmbient && mLowBitAmbient) || (mAmbient && mBurnInProtection)){
+//                Log.i("Low Mode Battery:","Yes. Here it comes");
+//                //canvas.drawColor(Color.BLACK);
+//                //canvas.drawBitmap(mGrayBackgroundBitmap, 0, 0, mBackgroundPaint);
+//                canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
+//
+//
+//            } else if (mAmbient) {
+//                Log.i("Ambient Mode Battery:","Yes. Here it comes");
+//                //canvas.drawBitmap(mGrayBackgroundBitmap, 0, 0, mBackgroundPaint);
+//                canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
+//
+//            } else {
+//                canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
+//            }
         }
+
+//            if (mAmbient && (mLowBitAmbient || mBurnInProtection)) {
+//                //canvas.drawColor(Color.BLACK);
+//                canvas.drawBitmap(mGrayBackgroundBitmap, 0, 0, mBackgroundPaint);
+//                Log.i("Ambient Mode Battery:","Yes. Here it comes");
+//            } else {
+//                canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
+//                }
+////            } else {
+////                canvas.drawBitmap(mBackgroundBitmap, 0, 0, mBackgroundPaint);
+////            }
+//        }
 
         private void drawWatchFace(Canvas canvas) {
 
@@ -372,7 +411,7 @@ public class Sitecore extends CanvasWatchFaceService {
              * cases where you want to allow users to select their own photos, this dynamically
              * creates them on top of the photo.
              */
-            float innerTickRadius = mCenterX - 10;
+            float innerTickRadius = mCenterX - 20;
             float outerTickRadius = mCenterX;
             for (int tickIndex = 0; tickIndex < 12; tickIndex++) {
                 float tickRot = (float) (tickIndex * Math.PI * 2 / 12);
@@ -403,33 +442,41 @@ public class Sitecore extends CanvasWatchFaceService {
             canvas.save();
 
             canvas.rotate(hoursRotation, mCenterX, mCenterY);
-            canvas.drawLine(
-                    mCenterX,
-                    mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
-                    mCenterX,
-                    mCenterY - sHourHandLength,
-                    mHourPaint);
+            drawHand(canvas, sHourHandLength);
+//            canvas.drawLine(
+//                    mCenterX,
+//                    mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
+//                    mCenterX,
+//                    mCenterY - sHourHandLength,
+//                    mHourPaint);
 
             canvas.rotate(minutesRotation - hoursRotation, mCenterX, mCenterY);
-            canvas.drawLine(
-                    mCenterX,
-                    mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
-                    mCenterX,
-                    mCenterY - sMinuteHandLength,
-                    mMinutePaint);
+            drawHand(canvas, sMinuteHandLength);
+
+//            canvas.drawLine(
+//                    mCenterX,
+//                    mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
+//                    mCenterX,
+//                    mCenterY - sMinuteHandLength,
+//                    mMinutePaint);
 
             /*
              * Ensure the "seconds" hand is drawn only when we are in interactive mode.
              * Otherwise, we only update the watch face once a minute.
              */
             if (!mAmbient) {
+                // Get the clock-hands rotations
+
                 canvas.rotate(secondsRotation - minutesRotation, mCenterX, mCenterY);
-                canvas.drawLine(
-                        mCenterX,
-                        mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
-                        mCenterX,
-                        mCenterY - mSecondHandLength,
-                        mSecondPaint);
+                canvas.drawLine(mCenterX, mCenterY - HAND_END_CAP_RADIUS, mCenterX,
+                        mCenterY - mSecondHandLength, mHourPaint);
+
+//                canvas.drawLine(
+//                        mCenterX,
+//                        mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
+//                        mCenterX,
+//                        mCenterY - mSecondHandLength,
+//                        mSecondPaint);
 
             }
             canvas.drawCircle(
@@ -440,6 +487,13 @@ public class Sitecore extends CanvasWatchFaceService {
 
             /* Restore the canvas' original orientation. */
             canvas.restore();
+        }
+
+        private void drawHand(Canvas canvas, float handLength) {
+            canvas.drawRoundRect(mCenterX - HAND_END_CAP_RADIUS,
+                    mCenterY - handLength, mCenterX + HAND_END_CAP_RADIUS,
+                    mCenterY + HAND_END_CAP_RADIUS, HAND_END_CAP_RADIUS,
+                    HAND_END_CAP_RADIUS, mHourPaint);
         }
 
         @Override
@@ -505,6 +559,31 @@ public class Sitecore extends CanvasWatchFaceService {
                         - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
+        }
+        private String getBatteryInfoPhone(Canvas canvas)
+        {
+            IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus =  getApplicationContext().registerReceiver(null, iFilter);
+
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+
+            String batteryStatusLevel= level + "%";
+
+            Typeface WATCH_TEXT_TYPEFACE = Typeface.create( Typeface.SERIF, Typeface.BOLD);
+
+            mTextColorPaint = new Paint();
+            mTextColorPaint.setColor( Color.BLUE );
+            mTextColorPaint.setAntiAlias( true );
+            mTextColorPaint.setTypeface(WATCH_TEXT_TYPEFACE);
+            float minusLevelX = 35f;
+            if(level != 100){
+                minusLevelX = 20f;
+            }
+
+            mTextColorPaint.setTextSize(30f);
+            canvas.drawText( batteryStatusLevel, mCenterX - minusLevelX , mCenterY - 100f, mTextColorPaint );
+
+            return batteryStatusLevel;
         }
     }
 }
